@@ -128,6 +128,72 @@
             top: 10px;
             right: 20px;
         }
+        /* --- ADVANCED CHATBOT STYLES --- */
+
+/* 1. Glassmorphism Effect for Chat Window */
+#chatWindow {
+    /* Make the window semi-transparent */
+    background-color: rgba(255, 255, 255, 0.95);
+    
+    /* Apply the blur filter for the "frosted glass" look */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    /* Custom, layered shadow for depth and floating effect */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.1);
+    
+    /* Initial state for the smooth transition (scaled down and off-screen) */
+    transform: scale(0.85) translateY(10px);
+    opacity: 0;
+    /* Transition applied to all properties for smooth animation */
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease-out; 
+    transform-origin: bottom right; /* Ensures it animates from the button */
+}
+
+/* 2. Active State for Chat Window (removes the 'hidden' class via JavaScript) */
+#chatWindow:not(.hidden) {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* 3. Floating Button Effect */
+#chatToggleBtn {
+    transition: all 0.3s ease;
+    /* Vibrant shadow using your secondary color */
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.6); 
+}
+#chatToggleBtn:hover {
+    /* Deeper shadow on hover */
+    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.8);
+}
+
+
+/* 4. AI Thinking/Typing Indicator Animation (Dot Animation) */
+@keyframes typing-dots {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.typing-indicator span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 1px;
+    background-color: #0284c7; /* Your primary color */
+    border-radius: 50%;
+    animation: typing-dots 1.5s infinite ease-in-out;
+}
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s; /* Staggered delay for the 'typing' effect */
+}
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* Optional: Smooth scroll for messages */
+#chatMessages {
+    scroll-behavior: smooth;
+}
     </style>
 </head>
 
@@ -362,6 +428,39 @@
             <a href="#" aria-label="LinkedIn" class="hover:text-primary transition duration-300"><i class="fa-brands fa-linkedin-in"></i></a>
         </div>
         <p class="text-sm border-t border-gray-700 pt-6">Made with <i class="fa-solid fa-heart text-secondary mx-1"></i> by team ek4m. &copy; 2024</p>
+        <div id="aiChatbot" class="fixed bottom-6 right-6 z-50">
+
+        <button id="chatToggleBtn" class="bg-secondary text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:bg-orange-700 transition duration-300 transform hover:scale-105" aria-label="Open Chatbot">
+            <i class="fa-solid fa-comments"></i>
+        </button>
+
+        <div id="chatWindow" class="hidden absolute bottom-20 right-0 w-80 md:w-96 rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+            
+            <div class="bg-primary text-white p-4 flex justify-between items-center rounded-t-xl">
+                <h4 class="font-bold text-lg">CareerSpark AI Assistant</h4>
+                <button id="chatCloseBtn" class="text-white hover:text-gray-200" aria-label="Close Chatbot">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div id="chatMessages" class="flex-grow p-4 space-y-4 overflow-y-auto" style="max-height: 400px; min-height: 200px;">
+                <div class="flex justify-start">
+                    <div class="bg-gray-200 text-gray-800 p-3 rounded-xl rounded-bl-none max-w-[80%] text-sm">
+                        Hello! I'm your AI Career Assistant. How can I help you spark your career today?
+                    </div>
+                </div>
+                </div>
+
+            <div class="p-4 border-t border-gray-200">
+                <form id="chatForm" class="flex space-x-2">
+                    <input type="text" id="chatInput" placeholder="Ask me anything..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary text-sm" required>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition duration-300" aria-label="Send Message">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
     </footer>
     <!-- FOOTER END -->
 
@@ -705,8 +804,125 @@
                 }
             }, 2000); // 2-second delay
         });
+        // --- MODERN AI CHATBOT LOGIC ---
+
+const chatToggleBtn = document.getElementById('chatToggleBtn');
+const chatWindow = document.getElementById('chatWindow');
+const chatCloseBtn = document.getElementById('chatCloseBtn');
+const chatForm = document.getElementById('chatForm');
+const chatInput = document.getElementById('chatInput');
+const chatMessages = document.getElementById('chatMessages');
+
+// Toggle the chat window visibility using a concise arrow function
+chatToggleBtn.addEventListener('click', () => chatWindow.classList.toggle('hidden'));
+
+// Close button functionality
+chatCloseBtn.addEventListener('click', () => chatWindow.classList.add('hidden'));
+
+/**
+ * Appends a message bubble to the chat window.
+ * Uses template literals and ternary operators for concise class assignment.
+ */
+const appendMessage = (message, isUser = false) => {
+    const messageContainer = document.createElement('div');
+    // Using object destructuring for classes is a common modern pattern
+    messageContainer.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+
+    const messageBubble = document.createElement('div');
+    messageBubble.className = `p-3 rounded-xl max-w-[80%] text-sm ${
+        isUser
+        ? 'bg-primary text-white rounded-br-none'     // User: Blue bubble, white text
+        : 'bg-gray-200 text-gray-800 rounded-bl-none' // AI: Light gray bubble, dark gray text (Fixed)
+    }`;
+    messageBubble.textContent = message;
+
+    messageContainer.appendChild(messageBubble);
+    chatMessages.appendChild(messageContainer);
+
+    // Scroll to the latest message
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+
+// Handle sending a message with modern async/await syntax
+chatForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const userMessage = chatInput.value.trim();
+    if (userMessage === '') return;
+
+    // 1. Display user message
+    appendMessage(userMessage, true);
+    chatInput.value = ''; // Clear input
+
+    // 2. Display ANIMATED 'Typing...' message (using template literals)
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = 'typingIndicator';
+    typingIndicator.className = 'flex justify-start';
+    typingIndicator.innerHTML = `
+        <div class="bg-gray-200 p-3 rounded-xl rounded-bl-none text-sm italic text-gray-600 flex items-center space-x-1">
+            <span class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+            <span>AI is thinking...</span>
+        </div>
+    `;
+    chatMessages.appendChild(typingIndicator);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // 3. Get AI response (Calls the backend API)
+    const aiResponse = await getAiResponse(userMessage);
+
+    // 4. Remove typing indicator
+    typingIndicator.remove();
+
+    // 5. Display AI response
+    appendMessage(aiResponse, false);
+});
+
+// ------------------------------------------------------------------
+// --- API INTEGRATION: FINAL FUNCTION FOR OPENAI CALLS ---
+// ------------------------------------------------------------------
+
+/**
+ * Modern async function to call your SECURE BACKEND ENDPOINT.
+ * It sends the user's message to your server, which then calls the OpenAI API.
+ * * @param {string} userQuery - The message from the user.
+ * @returns {Promise<string>} - The AI's response message.
+ */
+const getAiResponse = async (userQuery) => {
+    const backendEndpoint = '/api/chat'; 
+
+    try {
+        const response = await fetch(backendEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Use property shorthand if the key and value are the same (not applicable here, but common)
+            body: JSON.stringify({ message: userQuery }), 
+        });
+
+        if (!response.ok) {
+            console.error('Backend Error Response Status:', response.status);
+            let errorDetail = await response.text(); 
+            throw new Error(`Server connection failed: ${response.status} - ${errorDetail.substring(0, 100)}...`);
+        }
+
+        const data = await response.json();
+        
+        // Use a nullish coalescing operator (??) for a robust fallback
+        return data.ai_text_response ?? "Sorry, the AI responded, but the text was empty.";
+
+    } catch (error) {
+        console.error('Chatbot API Fetch Error:', error);
+        return "Apologies, the connection to the AI service failed. Please ensure your backend server is running and configured correctly.";
+    }
+};
     </script>
 
 </body>
+
 
 </html>
